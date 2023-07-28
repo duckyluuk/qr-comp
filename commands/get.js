@@ -17,7 +17,7 @@ const init = async (interaction, client) => {
     const buffer = Buffer.from(code.image, 'base64');
     const image = new discord.AttachmentBuilder(buffer, { name: 'code.png' });
     const title = exists ? 'Your code has been created!' : 'Here is your code!';
-    const exampleEmbed = {
+    const embed = {
         title,
         description: 'Share it and get as many people as you can to scan it!',
         fields: [
@@ -43,7 +43,7 @@ const init = async (interaction, client) => {
         color: 0x00ffff,
     }
 
-    interaction.reply({ embeds: [exampleEmbed], files: [image], ephemeral: true });
+    interaction.reply({ embeds: [embed], files: [image], ephemeral: true });
 
 }
 

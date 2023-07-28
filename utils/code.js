@@ -2,7 +2,7 @@ const qrcode = require('qrcode');
 const { generate_id } = require("./id.js");
 const codes = require("../db/codes.js");
 
-async function create_code(user, id=null) {
+async function create_code(user={id:null, name:null}, id=null) {
     if(!id) id = await generate_id();
     
     const db_code = codes.create({

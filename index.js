@@ -9,8 +9,6 @@ const mongoose = require("mongoose");
 const Fingerprint = require("express-fingerprint");
 const path = require('path');
 
-const { create } = require("./utils/code.js");
-
 // env variables
 require('dotenv').config({
     path: path.join(__dirname, '.env'),
@@ -70,7 +68,7 @@ client.on('interactionCreate', async interaction => {
     if (interaction.isCommand()) {
         const { commandName } = interaction;
         const selectedCommand = commands.find(c => commandName === c.name);
-        selectedCommand.init(interaction, client, mongoose);
+        selectedCommand.init(interaction, client);
     }
 })
 
