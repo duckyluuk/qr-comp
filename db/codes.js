@@ -10,13 +10,14 @@ const CodeSchema = new mongoose.Schema({
     aliases: [
         {
             alias: String,
-            image: String,
+            image: String
         }
     ],
     visits: [
         {
             hash: String,
-            created_at: Date
+            created_at: Date,
+            visited_alias: String
         }
     ]
 });

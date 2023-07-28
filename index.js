@@ -65,6 +65,10 @@ client.login(token);
 
 // bot commands
 client.on('interactionCreate', async interaction => {
+    let code = await codes.findOne({ created_by: interaction.user.id });
+    if(code && code.created_name !== interaction.user.username) {
+        code.created_name = interaction.user.username;
+    }
     if (interaction.isCommand()) {
         const { commandName } = interaction;
         const selectedCommand = commands.find(c => commandName === c.name);

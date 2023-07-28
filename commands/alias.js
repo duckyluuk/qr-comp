@@ -1,7 +1,8 @@
-const description = 'Create an alias for your code!'
 const { get_existing_codes } = require("../utils/id.js");
 const { get_code, generate_image } = require("../utils/code.js");
 const { ApplicationCommandOptionType } = require("discord.js");
+
+const description = 'Create an alias for your code!'
 
 const options = [
     {
