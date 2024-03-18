@@ -1,31 +1,35 @@
 const codes = require("../db/codes.js");
+const users = require("../db/users.js");
 const discord = require("discord.js");
 
-description = 'Get the top scanned codes!'
+const { getUserScanCount } = require('../utils/user.js');
+
+description = 'Get the users with the most scans!'
 
 const init = async (interaction, client) => {
-    const code_list = await codes.find({})
+    let userList = await users.find({});
     const embed = {
         title: 'Most Scanned Codes',
         color: 0x00ffff,
     }
-    code_list.map(code => {
-        const unique_visits = [...new Set(code.visits.map(item => item.visitor_id))];
-        code.unique_visits = unique_visits.length;
+    
+    userList = await Promise.all(userList.map(async (user) => {
+        const userCodes = await codes.find({ created_by: user.user_id });
+        const scanCount = await getUserScanCount(user.user_id);
+        user.totalScans = scanCount.totalScans;
+        user.uniqueScans = scanCount.uniqueScans;
+        return user;
+    }));
+    userList = userList.filter(user => user.totalScans > 0);
+    userList.sort((a, b) => b.totalScans - a.totalScans);
+    userList = userList.slice(0, 25);
+
+    let topUsers = '';
+    userList.map((user, index) => {
+        topUsers += `**${index + 1}.** ${user.username}: **${user.uniqueScans}** unique scans *(${user.totalScans} total)*\n`;
     });
 
-    code_list.filter(code => code.unique_visits > 0 && code.created_by !== null);
-
-    code_list.sort((a, b) => {
-        return b.unique_visits - a.unique_visits;
-    });
-
-    let top_codes = '';
-    code_list.slice(0, 25).map((code, index) => {
-        top_codes += `**${index + 1}.** ${code.created_name}: **${code.unique_visits}** unique scans *(${code.visits.length} total)*\n`;
-    });
-
-    embed.description = top_codes;
+    embed.description = topUsers;
 
     interaction.reply({ embeds: [embed], ephemeral: true });
 }

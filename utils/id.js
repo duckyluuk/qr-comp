@@ -14,13 +14,8 @@ async function generate_id() {
 }
 
 async function get_existing_codes() {
-    let existing = [];
     let codes_list = await codes.find({});
-    codes_list.forEach(code => {
-        existing.push(code.code);
-        existing.push(...code.aliases);
-    });
-
+    existing = codes_list.map(code => code.code);
     return existing;
 }
 

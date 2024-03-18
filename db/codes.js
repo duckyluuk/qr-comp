@@ -5,14 +5,9 @@ const CodeSchema = new mongoose.Schema({
     image: String,
     created_at: Date,
     created_by: String,
-    created_name: String,
-    allowed_aliases: Number,
-    aliases: [
-        {
-            alias: String,
-            image: String
-        }
-    ],
+    embed_color: String,
+    embed_title: String,
+    embed_description: String,
     visits: [
         {
             hash: String,

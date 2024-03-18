@@ -1,60 +1,67 @@
-
-const { get_code } = require("../utils/code.js");
 const discord = require("discord.js");
-const { ApplicationCommandOptionType } = require("discord.js");
+const codes = require("../db/codes.js");
+const { getScanCount } = require('../utils/user.js');
 
-const description = 'Create an alias for your code!'
+const description = 'Get information about one of your codes!'
 
 const options = [
     {
         name: 'alias',
-        description: '(optional) The alias you want to get information about (defaults to your main code)',
-        type: ApplicationCommandOptionType.String,
+        description: 'The alias you want to get information about',
+        type: discord.ApplicationCommandOptionType.String,
         required: false,
     }
 ]
 
-
 const init = async (interaction, client) => {
-    const user = interaction.user;
-    const code = await get_code(user);
-
-    if(!code) {
-        interaction.reply({ content: 'You have not created a code yet! Use the command `/get` to generate one.', ephemeral: true });
-        return;
-    }
-
     const alias = interaction.options.getString('alias');
-    const aliases = code.aliases.map(alias => alias.alias);
-
-    if(alias && !aliases.includes(alias)) {
-        interaction.reply({ content: `You do not have the alias '${alias}'.`, ephemeral: true });
-        return;
+    const user = interaction.user;
+    let code;
+    if (alias) {
+        code = await codes.findOne({ created_by: user.id, code: alias });
+        if (!code) {
+            interaction.reply({ content: 'You have not created a code with this alias!', ephemeral: true });
+            return;
+        }
+    }
+    else {
+        code = await codes.findOne({ created_by: user.id });
+        if (!code) {
+            interaction.reply({ content: 'You have not created a code yet! Use `/create` to create a code.', ephemeral: true });
+            return;
+        }
     }
 
-    let image = code.image;
-    let code_string = code.code;
-    if(alias) {
-        image = code.aliases.find(a => a.alias === alias).image;
-        code_string = alias;
-    }
-
-    const visits = code.visits.filter(visit => visit.alias === code_string);
-    const unique_visits = [...new Set(visits.map(item => item.visitor_id))];
-
-    const buffer = Buffer.from(image, 'base64');
-    const attachment = new discord.AttachmentBuilder(buffer, { name: 'code.png' });
-
+    const visitInfo = await getScanCount(code.code);
+    const buffer = Buffer.from(code.image, 'base64');
+    const image = new discord.AttachmentBuilder(buffer, { name: 'code.png' });
     const embed = {
-        title: `Code Information: ${code_string}`,
-        description: `This code has ${unique_visits.length} unique scans (${visits.length} total), out of the ${code.visits.length} total scans you have.`,
+        title: "Here is your code:",
+        description: 'Share it and get as many people as you can to scan it!',
+        fields: [
+            {
+                name: 'Code',
+                value: code.code,
+                inline: true,
+            },
+            {
+                name: 'Scans',
+                value: `Your code has ${visitInfo.uniqueScans} unique scans! (${visitInfo.totalScans} total)`,
+                inline: true,
+            },
+            {
+                name: 'URL',
+                value: `Instead of the QR code, you can also share a normal URL: \n ${process.env.site_url + code.code}`,
+                inline: false,
+            }
+        ],
         image: {
             url: 'attachment://code.png',
         },
-        color: 0x00ffff
+        color: 0x00ffff,
     }
 
-    interaction.reply({ embeds: [embed], files: [attachment], ephemeral: true });
+    interaction.reply({ embeds: [embed], files: [image], ephemeral: true });
 }
 
 module.exports = { init, description, options }

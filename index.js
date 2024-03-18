@@ -19,6 +19,7 @@ const db_uri = process.env.db_uri;
 
 // database
 const codes = require("./db/codes.js");
+const users = require("./db/users.js");
 
 // initialise
 mongoose.connect(
@@ -34,10 +35,12 @@ const client = new discord.Client({intents: [discord.GatewayIntentBits.Guilds]})
 // start of bot
 let commandTmp = []
 let commands = []
+let interactions = []
 client.once('ready', () => {
     console.log('Bot Ready!');
 
     let commandsFiles = fs.readdirSync(path.join(__dirname, './commands'));
+    let interactionsFiles = fs.readdirSync(path.join(__dirname, './interactions'));
 
     commandsFiles.forEach((file, i) => {
         commandTmp[i] = require('./commands/' + file);
@@ -50,6 +53,15 @@ client.once('ready', () => {
                 options: commandTmp[i].options
             },
         ];
+    });
+
+    interactionsFiles.forEach((file, i) => {
+        let interaction = require('./interactions/' + file);
+        interactions[i] = {
+            name: file.split('.')[0],
+            description: interaction.description,
+            init: interaction.init
+        }
     });
 
     const rest = new REST({ version: '9' }).setToken(token);
@@ -66,13 +78,29 @@ client.login(token);
 
 // bot commands
 client.on('interactionCreate', async interaction => {
-    let code = await codes.findOne({ created_by: interaction.user.id });
-    if(code && code.created_name !== interaction.user.username) {
-        code.created_name = interaction.user.username;
+    let user = await users.findOne({ user_id: interaction.user.id });
+    if(!user) {
+        user = new users({
+            user_id: interaction.user.id,
+            username: interaction.user.username,
+            allowed_codes: 3,
+            total_scans: 0
+        });
+        user.save();
+    }
+    if(user.username !== interaction.user.username) {
+        user.username = interaction.user.username;
+        user.save();
     }
     if (interaction.isCommand()) {
         const { commandName } = interaction;
         const selectedCommand = commands.find(c => commandName === c.name);
+        selectedCommand.init(interaction, client);
+    }
+
+    if (interaction.isModalSubmit()) {
+        const { customId } = interaction;
+        const selectedCommand = interactions.find(c => customId === c.name);
         selectedCommand.init(interaction, client);
     }
 })
