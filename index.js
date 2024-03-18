@@ -8,6 +8,7 @@ const discord = require("discord.js");
 const mongoose = require("mongoose");
 const Fingerprint = require("express-fingerprint");
 const path = require('path');
+const { isbot } = require('isbot');
 
 // env variables
 require('dotenv').config({
@@ -115,7 +116,12 @@ app.get("/:code", async (req, res) => {
         });
         db_code.save();
     }
-    res.redirect("https://youtu.be/dQw4w9WgXcQ");
+    
+    if(isbot(req.headers['user-agent'])) {
+        res.redirect("/");
+    } else {
+        res.redirect("https://youtu.be/dQw4w9WgXcQ");
+    }
 });
 
 app.get("/", (req, res) => {
