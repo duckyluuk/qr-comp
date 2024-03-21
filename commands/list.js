@@ -45,8 +45,11 @@ const init = async (interaction, client) => {
         embeds.push(embed);
         images.push(image);
     }
-
-    interaction.reply({ embeds, files: images, ephemeral: true });
+    if (embeds.length === 0) {
+        return interaction.reply({ content: 'You have no codes! Create your first one with `/create`.', ephemeral: true });
+    } else {
+        interaction.reply({ embeds, files: images, ephemeral: true });
+    }
 }
 
 module.exports = { init, description }
